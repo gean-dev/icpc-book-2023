@@ -25,8 +25,8 @@ Non-distinct roots $r$ become polynomial factors, e.g. $a_n = (d_1n + d_2)r^n$.
 \begin{align*}
 \sin(v+w)&{}=\sin v\cos w+\cos v\sin w\\
 \cos(v+w)&{}=\cos v\cos w-\sin v\sin w\\
-\end{align*}
-\begin{align*}
+% \end{align*}
+% \begin{align*}
 \tan(v+w)&{}=\dfrac{\tan v+\tan w}{1-\tan v\tan w}\\
 \sin v+\sin w&{}=2\sin\dfrac{v+w}{2}\cos\dfrac{v-w}{2}\\
 \cos v+\cos w&{}=2\cos\dfrac{v+w}{2}\cos\dfrac{v-w}{2}
@@ -174,3 +174,10 @@ $\lim_{k\rightarrow\infty}\mathbf{P}^k = \mathbf{1}\pi$.
 A Markov chain is an A-chain if the states can be partitioned into two sets $\mathbf{A}$ and $\mathbf{G}$, such that all states in $\mathbf{A}$ are absorbing ($p_{ii}=1$), and all states in $\mathbf{G}$ leads to an absorbing state in $\mathbf{A}$.
 The probability for absorption in state $i\in\mathbf{A}$, when the initial state is $j$, is $a_{ij} = p_{ij}+\sum_{k\in\mathbf{G}} a_{ik}p_{kj}$.
 The expected time until absorption, when the initial state is $i$, is $t_i = 1+\sum_{k\in\mathbf{G}}p_{ki}t_k$.
+
+\subsection{Goldbatch's Conjecture}
+
+\begin{itemize}
+	\item Even number can be written in sum of two primes (Up to $1e12$)
+	\item Range of $N^{th}$ prime and $N+1^{th}$ prime will be less than or equal to $300$ (Up to $1e12$)
+\end{itemize}
