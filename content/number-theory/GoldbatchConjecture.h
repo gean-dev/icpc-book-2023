@@ -3,7 +3,7 @@
  * Date: 2023-12-02
  * License: CC0
  * Source: https://www.geeksforgeeks.org/program-for-goldbachs-conjecture-two-primes-with-given-sum/ 
- * Description: Find two prime numbers which sum equals $N$ 
+ * Description: Find two prime numbers which sum equals $s$ 
  * Time: $O(N\log{N})$
  * Status: Tested
  */
