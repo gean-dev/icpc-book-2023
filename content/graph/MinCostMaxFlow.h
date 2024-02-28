@@ -10,84 +10,86 @@
  */
 #pragma once
 
-// #include <bits/extc++.h> /// include-line, keep-include
-
-const ll INF = numeric_limits<ll>::max() / 4;
-typedef vector<ll> VL;
-
-struct MCMF {
-	int N;
-	vector<vi> ed, red;
-	vector<VL> cap, flow, cost;
-	vi seen;
-	VL dist, pi;
-	vector<pii> par;
-
-	MCMF(int N) :
-		N(N), ed(N), red(N), cap(N, VL(N)), flow(cap), cost(cap),
-		seen(N), dist(N), pi(N), par(N) {}
-
-	void addEdge(int from, int to, ll cap, ll cost) {
-		this->cap[from][to] = cap;
-		this->cost[from][to] = cost;
-		ed[from].push_back(to);
-		red[to].push_back(from);
-	}
-
-	void path(int s) {
-		fill(all(seen), 0);
-		fill(all(dist), INF);
-		dist[s] = 0; ll di;
-
-		__gnu_pbds::priority_queue<pair<ll, int>> q;
-		vector<decltype(q)::point_iterator> its(N);
-		q.push({0, s});
-
-		auto relax = [&](int i, ll cap, ll cost, int dir) {
-			ll val = di - pi[i] + cost;
-			if (cap && val < dist[i]) {
-				dist[i] = val;
-				par[i] = {s, dir};
-				if (its[i] == q.end()) its[i] = q.push({-dist[i], i});
-				else q.modify(its[i], {-dist[i], i});
-			}
-		};
-
-		while (!q.empty()) {
-			s = q.top().second; q.pop();
-			seen[s] = 1; di = dist[s] + pi[s];
-			for (int i : ed[s]) if (!seen[i])
-				relax(i, cap[s][i] - flow[s][i], cost[s][i], 1);
-			for (int i : red[s]) if (!seen[i])
-				relax(i, flow[i][s], -cost[i][s], 0);
-		}
-		rep(i,0,N) pi[i] = min(pi[i] + dist[i], INF);
-	}
-
-	pair<ll, ll> maxflow(int s, int t) {
-		ll totflow = 0, totcost = 0;
-		while (path(s), seen[t]) {
-			ll fl = INF;
-			for (int p,r,x = t; tie(p,r) = par[x], x != s; x = p)
-				fl = min(fl, r ? cap[p][x] - flow[p][x] : flow[x][p]);
-			totflow += fl;
-			for (int p,r,x = t; tie(p,r) = par[x], x != s; x = p)
-				if (r) flow[p][x] += fl;
-				else flow[x][p] -= fl;
-		}
-		rep(i,0,N) rep(j,0,N) totcost += cost[i][j] * flow[i][j];
-		return {totflow, totcost};
-	}
-
-	// If some costs can be negative, call this before maxflow:
-	void setpi(int s) { // (otherwise, leave this out)
-		fill(all(pi), INF); pi[s] = 0;
-		int it = N, ch = 1; ll v;
-		while (ch-- && it--)
-			rep(i,0,N) if (pi[i] != INF)
-				for (int to : ed[i]) if (cap[i][to])
-					if ((v = pi[i] + cost[i][to]) < pi[to])
-						pi[to] = v, ch = 1;
-		assert(it >= 0); // negative cost cycle
-	}
+template<class F,class C>
+struct MinCostFlow{
+    struct Edge{
+        int to;
+        F flow,cap;
+        C cost;
+        Edge(int _to,F _cap,C _cost):to(_to),flow(0),cap(_cap),cost(_cost){}
+        F getcap(){
+            return cap-flow;
+        }
+    };
+    int n;
+    vector<Edge> e;
+    vector<vi> adj;
+    vector<C> pot,dist;
+    vi pre;
+    bool neg;
+    const F FINF=numeric_limits<F>::max()/2;
+    const C CINF=numeric_limits<C>::max()/2;
+    MinCostFlow(){}
+    MinCostFlow(int _n){
+        init(_n);
+    }
+    void init(int _n){
+        n=_n;
+        e.clear();
+        adj.assign(n,{});
+        neg=false;
+    }
+    void addEdge(int u,int v,F cap,C cost){
+        adj[u].emplace_back(sz(e));
+        e.emplace_back(v,cap,cost);
+        adj[v].emplace_back(sz(e));
+        e.emplace_back(u,0,-cost);
+        if(cost<0)neg=true;
+    }
+    bool dijkstra(int s,int t){
+        using P = pair<C,int>;
+        dist.assign(n,CINF);
+        pre.assign(n,-1);
+        priority_queue<P,vector<P>,greater<P>> pq;
+        dist[s]=0;
+        pq.emplace(0,s);
+        while(!pq.empty()){
+            auto [d,u]=pq.top();
+            pq.pop();
+            if(dist[u]<d)continue;
+            for(int i:adj[u]){
+                int v=e[i].to;
+                C ndist=d+pot[u]-pot[v]+e[i].cost;
+                if(e[i].getcap()>0&&dist[v]>ndist){
+                    pre[v]=i;
+                    dist[v]=ndist;
+                    pq.emplace(ndist,v);
+                }
+            }
+        }
+        return dist[t]<CINF;
+    }
+    pair<F,C> flow(int s,int t){
+        F flow=0;
+        C cost=0;
+        pot.assign(n,0);
+        if(neg)for(int t=0;t<n;t++)for(int i=0;i<sz(e);i++)if(e[i].getcap()>0){
+            int u=e[i^1].to,v=e[i].to;
+            pot[v]=min(pot[v],pot[u]+e[i].cost);
+        } // Bellman-Ford
+        while(dijkstra(s,t)){
+            for(int i=0;i<n;i++)pot[i]+=dist[i];
+            F aug=FINF;
+            for(int u=t;u!=s;u=e[pre[u]^1].to){
+                aug=min(aug,e[pre[u]].getcap());
+            } // find bottleneck
+            for(int u=t;u!=s;u=e[pre[u]^1].to){
+                e[pre[u]].flow+=aug;
+                e[pre[u]^1].flow-=aug;
+            } // push flow
+            flow+=aug;
+            cost+=aug*pot[t];
+        }
+        return {flow,cost};
+    }
 };
